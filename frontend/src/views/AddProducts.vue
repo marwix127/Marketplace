@@ -9,7 +9,7 @@ const { error: showError, success: showSuccess } = useToast();
 
 const title = ref("");
 const description = ref("");
-const price = ref("");
+const price = ref(null);
 const file = ref(null);
 const preview = ref(null);
 
@@ -28,7 +28,10 @@ const createProduct = async () => {
     const formData = new FormData();
     formData.append("title", title.value);
     formData.append("description", description.value);
-    formData.append("price", price.value);
+    // Normalizar precio: aceptar coma como separador decimal si el usuario la introduce
+    let p = price.value
+    if (typeof p === 'string') p = p.replace(',', '.')
+    formData.append("price", p);
 
     if (file.value) {
       formData.append("image", file.value);
@@ -72,7 +75,7 @@ const createProduct = async () => {
 
         <div class="form-group">
           <label for="price">Precio (€)</label>
-          <input id="price" type="number" v-model="price" required />
+          <input id="price" type="number" step="0.01" v-model.number="price" required />
         </div>
 
         <div class="form-group">
