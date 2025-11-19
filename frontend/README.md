@@ -1,38 +1,120 @@
-# frontend
+🛒 Marketplace - Django REST & Vue 3
 
-This template should help get you started developing with Vue 3 in Vite.
+Un marketplace full-stack construido con Django REST Framework, Autenticación JWT, y Vue 3 como frontend.
+Permite registro, login, gestión de productos con imágenes y CRUD completo por usuario.
 
-## Recommended IDE Setup
+🚀 Tecnologías usadas
+Backend – Django REST Framework
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+Python 3
 
-## Recommended Browser Setup
+Django 4
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Django REST Framework
 
-## Customize configuration
+JWT (SimpleJWT)
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+SQLite3
 
-## Project Setup
+Pillow (para imágenes)
 
-```sh
+Frontend – Vue 3
+
+Vite
+
+Axios
+
+Vue Router
+
+LocalStorage para tokens
+
+✨ Funcionalidades
+👤 Usuarios
+
+Registro con email + username + password
+
+Login con JWT (access + refresh)
+
+GET /users/me/ para obtener usuario autenticado
+
+🛍️ Productos
+
+Crear productos con imagen
+
+Listar todos los productos
+
+Ver detalle
+
+Editar y eliminar solo si eres el propietario
+
+Protecciones con permisos:
+
+GET → público
+
+POST / PUT / DELETE → solo autenticado
+
+📦 Instalación Backend
+cd backend
+python -m venv venv
+venv/Scripts/activate     # Windows
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+
+Rutas API principales
+Método	Endpoint	Descripción
+POST	/api/users/register/	Registro
+POST	/api/users/login/	Login (JWT)
+GET	/api/users/me/	Usuario autenticado
+GET	/api/products/	Listar productos
+POST	/api/products/	Crear producto
+GET	/api/products/<id>/	Ver detalle
+PUT	/api/products/<id>/	Actualizar
+DELETE	/api/products/<id>/	Eliminar
+🎨 Instalación Frontend
+cd frontend
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
-```
 
-### Compile and Minify for Production
+Configuración Axios
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8000/api/",
+});
 
-```sh
-npm run build
-```
+🖼️ Subida de imágenes
+
+Asegúrate de tener configurado:
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+Y en urls.py:
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+🔐 Autenticación
+
+El token se guarda en localStorage:
+
+localStorage.setItem("access", token);
+axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+📄 Pendiente / Mejoras futuras
+
+Sistema de carrito
+
+Valoraciones y reviews
+
+Búsqueda y filtros
+
+Paginación
+
+📜 Licencia
+
+Libre para uso educativo o portfolio.
+
+Si quieres te genero también un logo simple, un badge pack, o una versión más larga/profesional del README.
