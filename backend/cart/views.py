@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from products.models import Product
+from orders.models import Order, OrderItem
+from orders.serializers import OrderSerializer
 
 class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
@@ -96,3 +98,38 @@ class CartViewSet(viewsets.ModelViewSet):
         cart = self.get_object()
         cart.items.all().delete()
         return Response({'message': 'Carrito vaciado.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def checkout(self, request):
+        """Create an order from the current cart items and clear the cart."""
+        cart = self.get_object()
+        cart_items = cart.items.all()
+
+        if not cart_items.exists():
+            return Response({'error': 'El carrito está vacío.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate total price
+        total_price = sum(item.get_subtotal() for item in cart_items)
+
+        # Create the order
+        order = Order.objects.create(
+            user=request.user,
+            total_price=total_price
+        )
+
+        # Create order items
+        for cart_item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product_title=cart_item.product.title,
+                product_price=cart_item.product.price,
+                quantity=cart_item.quantity,
+                subtotal=cart_item.get_subtotal()
+            )
+
+        # Clear the cart
+        cart_items.delete()
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+

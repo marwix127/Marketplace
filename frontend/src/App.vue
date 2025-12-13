@@ -26,6 +26,10 @@
             </router-link>
           </li>
 
+          <li v-if="isAuthenticated">
+            <router-link to="/orders" class="nav-link">📦 Mis Pedidos</router-link>
+          </li>
+
           <li v-if="!isAuthenticated">
             <router-link to="/login" class="nav-link">Inicia Sesión</router-link>
           </li>

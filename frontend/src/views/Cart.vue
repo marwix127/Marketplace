@@ -9,6 +9,7 @@ const { success, error } = useToast()
 
 const cart = ref(null)
 const loading = ref(true)
+const checkingOut = ref(false)
 
 const backendURL = 'http://127.0.0.1:8000'
 
@@ -91,6 +92,22 @@ async function clearCart() {
   }
 }
 
+async function checkout() {
+  if (checkingOut.value) return
+  checkingOut.value = true
+  try {
+    await api.post('cart/checkout/')
+    success('¡Pedido realizado con éxito!')
+    window.dispatchEvent(new Event('cart-changed'))
+    router.push('/orders')
+  } catch (err) {
+    error('Error al procesar el pedido')
+    console.error('Checkout error:', err)
+  } finally {
+    checkingOut.value = false
+  }
+}
+
 function goToProduct(productId) {
   router.push(`/product/${productId}`)
 }
@@ -143,7 +160,13 @@ function goToProduct(productId) {
           <span>Total:</span>
           <strong>{{ cart.total_price.toFixed(2) }}€</strong>
         </div>
-        <button class="btn-primary btn-checkout">Proceder al pago</button>
+        <button 
+          class="btn-primary btn-checkout" 
+          @click="checkout"
+          :disabled="checkingOut"
+        >
+          {{ checkingOut ? 'Procesando...' : 'Proceder al pago' }}
+        </button>
         <button class="btn-secondary" @click="clearCart">Vaciar carrito</button>
       </div>
     </div>
