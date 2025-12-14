@@ -43,6 +43,10 @@
         <button type="submit" class="btn-primary">Registrarse</button>
       </form>
 
+      <div v-if="errorMsg" class="alert alert-error">
+        {{ errorMsg }}
+      </div>
+
       <p class="auth-footer">
         ¿Ya tienes cuenta?
         <router-link to="/login" class="link-primary">Inicia sesión aquí</router-link>
@@ -61,8 +65,10 @@ const { error: showError, success: showSuccess } = useToast();
 const email = ref("");
 const username = ref("");
 const password = ref("");
+const errorMsg = ref("");
 
 const register = async () => {
+  errorMsg.value = "";
   try {
     const response = await api.post("/users/register/", {
       email: email.value,
@@ -74,8 +80,30 @@ const register = async () => {
     email.value = "";
     username.value = "";
     password.value = "";
+    // Opcional: Redirigir al login tras unos segundos
+    // setTimeout(() => router.push('/login'), 2000);
   } catch (err) {
-    showError(err.response?.data?.detail || "Error al registrar usuario.");
+    console.error("Error registering:", err);
+    let msg = "Error al registrar usuario.";
+    
+    if (err.response && err.response.data) {
+        const data = err.response.data;
+        // Si es un error de detalle simple
+        if (data.detail) {
+            msg = data.detail;
+        } 
+        // Si es un error de validación de campos (password, username, email...)
+        else {
+            // Unimos los mensajes de error de los campos
+            const fieldErrors = Object.values(data).flat();
+            if (fieldErrors.length > 0) {
+                msg = fieldErrors.join(" ");
+            }
+        }
+    }
+    
+    errorMsg.value = msg;
+    showError(msg);
   }
 };
 </script>
