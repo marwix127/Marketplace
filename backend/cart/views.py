@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -102,33 +103,38 @@ class CartViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def checkout(self, request):
         """Create an order from the current cart items and clear the cart."""
-        cart = self.get_object()
-        cart_items = cart.items.all()
+        # All-or-nothing: if any step fails, no order is created and the cart is kept
+        with transaction.atomic():
+            # Lock the cart row so concurrent checkouts can't create duplicate orders
+            cart, created = Cart.objects.select_for_update().get_or_create(user=request.user)
+            cart_items = list(cart.items.select_related('product'))
 
-        if not cart_items.exists():
-            return Response({'error': 'El carrito está vacío.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not cart_items:
+                return Response({'error': 'El carrito está vacío.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Calculate total price
-        total_price = sum(item.get_subtotal() for item in cart_items)
+            # Calculate total price
+            total_price = sum(item.get_subtotal() for item in cart_items)
 
-        # Create the order
-        order = Order.objects.create(
-            user=request.user,
-            total_price=total_price
-        )
-
-        # Create order items
-        for cart_item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product_title=cart_item.product.title,
-                product_price=cart_item.product.price,
-                quantity=cart_item.quantity,
-                subtotal=cart_item.get_subtotal()
+            # Create the order
+            order = Order.objects.create(
+                user=request.user,
+                total_price=total_price
             )
 
-        # Clear the cart
-        cart_items.delete()
+            # Create order items
+            OrderItem.objects.bulk_create([
+                OrderItem(
+                    order=order,
+                    product_title=cart_item.product.title,
+                    product_price=cart_item.product.price,
+                    quantity=cart_item.quantity,
+                    subtotal=cart_item.get_subtotal()
+                )
+                for cart_item in cart_items
+            ])
+
+            # Clear only the items that were ordered
+            cart.items.filter(id__in=[item.id for item in cart_items]).delete()
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

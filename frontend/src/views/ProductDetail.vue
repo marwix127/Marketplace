@@ -24,13 +24,25 @@ onMounted(async () => {
 
 async function addToCart() {
   if (!product.value) return
+  if (!localStorage.getItem('access')) {
+    error('Debes iniciar sesión para añadir productos al carrito')
+    setTimeout(() => {
+      router.push('/login')
+    }, 500)
+    return
+  }
+
   try {
-    // Intentamos llamar al endpoint del carrito; si falla, mostramos notificación local
-    await api.post('/cart/', { product: product.value.id, quantity: 1 })
-    success('Añadido al carrito')
+    await api.post('cart/add_item/', {
+      product_id: product.value.id,
+      quantity: 1
+    })
+    success(`${product.value.title} añadido al carrito`)
+    // notify navbar to refresh cart count
+    window.dispatchEvent(new Event('cart-changed'))
   } catch (err) {
     console.error('Error añadiendo al carrito', err)
-    success('Añadido al carrito (local)')
+    error('Error al añadir producto al carrito')
   }
 }
 
