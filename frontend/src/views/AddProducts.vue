@@ -75,7 +75,7 @@ const createProduct = async () => {
 
         <div class="form-group">
           <label for="price">Precio (€)</label>
-          <input id="price" type="number" step="0.01" v-model.number="price" required />
+          <input id="price" type="number" step="0.01" min="0" v-model.number="price" required />
         </div>
 
         <div class="form-group">

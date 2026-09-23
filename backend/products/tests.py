@@ -3,7 +3,6 @@ import shutil
 import tempfile
 from decimal import Decimal
 from io import BytesIO
-from unittest import expectedFailure
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -85,13 +84,14 @@ class ProductCreateTests(ProductTestCase):
         self.assertIn("title", r.data)
         self.assertIn("price", r.data)
 
-    @expectedFailure  # BUG: no price validation, a negative price is accepted (201)
     def test_create_rejects_negative_price(self):
         self.client.force_authenticate(self.owner)
 
         r = self.client.post(LIST_URL, {"title": "Silla", "price": "-5.00"}, format="json")
 
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("price", r.data)
+        self.assertFalse(Product.objects.filter(title="Silla").exists())
 
 
 class ProductOwnershipTests(ProductTestCase):

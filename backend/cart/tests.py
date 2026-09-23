@@ -1,5 +1,4 @@
 from decimal import Decimal
-from unittest import expectedFailure
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -66,7 +65,6 @@ class CartAccessTests(CartTestCase):
         self.assertEqual(subtotals, {"Lámpara": 21.0, "Taza": 3.0})
         self.assertEqual(r.data["total_price"], 24.0)
 
-    @expectedFailure  # BUG: CartViewSet is a full ModelViewSet; POST /api/cart/ raises IntegrityError (500)
     def test_generic_cart_endpoints_are_not_exposed(self):
         cart = Cart.objects.create(user=self.user)
         not_exposed = (status.HTTP_404_NOT_FOUND, status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -111,13 +109,11 @@ class AddItemTests(CartTestCase):
                 self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(CartItem.objects.exists())
 
-    @expectedFailure  # BUG: Product.objects.get(id="abc") raises ValueError (500)
-    def test_non_numeric_product_id_is_rejected(self):
+    def test_non_numeric_product_id_returns_404(self):
         r = self.post("add_item", {"product_id": "abc"})
 
-        self.assertIn(r.status_code, (status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND))
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
-    @expectedFailure  # BUG: int(None) raises TypeError, only ValueError is caught (500)
     def test_null_quantity_returns_400(self):
         r = self.post("add_item", {"product_id": self.lamp.id, "quantity": None})
 
@@ -161,12 +157,12 @@ class UpdateRemoveClearTests(CartTestCase):
 
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
-    @expectedFailure  # BUG: CartItem.objects.get(id="abc") raises ValueError (500)
-    def test_non_numeric_item_id_is_rejected(self):
-        rejected = (status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND)
+    def test_non_numeric_item_id_returns_404(self):
+        update = self.post("update_item", {"item_id": "abc", "quantity": 1})
+        remove = self.post("remove_item", {"item_id": "abc"})
 
-        self.assertIn(self.post("update_item", {"item_id": "abc", "quantity": 1}).status_code, rejected)
-        self.assertIn(self.post("remove_item", {"item_id": "abc"}).status_code, rejected)
+        self.assertEqual(update.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(remove.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_cannot_touch_another_users_items(self):
         update = self.post("update_item", {"item_id": self.other_item.id, "quantity": 1})

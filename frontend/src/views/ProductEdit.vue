@@ -86,7 +86,7 @@ const updateProduct = async () => {
 
           <div class="form-group">
             <label for="price">Precio (€)</label>
-            <input id="price" type="number" v-model="price" required />
+            <input id="price" type="number" step="0.01" min="0" v-model="price" required />
           </div>
 
           <div class="form-group">

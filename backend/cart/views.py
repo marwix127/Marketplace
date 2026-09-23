@@ -9,7 +9,8 @@ from products.models import Product
 from orders.models import Order, OrderItem
 from orders.serializers import OrderSerializer
 
-class CartViewSet(viewsets.ModelViewSet):
+class CartViewSet(viewsets.GenericViewSet):
+    # Only the custom actions below are exposed (no generic list/create/update/destroy)
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
 
@@ -36,14 +37,15 @@ class CartViewSet(viewsets.ModelViewSet):
 
         try:
             product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
+        except (Product.DoesNotExist, ValueError, TypeError):
+            # ValueError/TypeError: product_id is not a valid id (e.g. "abc")
             return Response({'error': 'Producto no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             quantity = int(quantity)
             if quantity <= 0:
                 return Response({'error': 'La cantidad debe ser mayor a 0.'}, status=status.HTTP_400_BAD_REQUEST)
-        except ValueError:
+        except (ValueError, TypeError):
             return Response({'error': 'Cantidad inválida.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get or create cart item, or update quantity if already exists
@@ -67,10 +69,11 @@ class CartViewSet(viewsets.ModelViewSet):
 
         try:
             cart_item = CartItem.objects.get(id=item_id, cart=cart)
-            cart_item.delete()
-            return Response({'message': 'Item removido del carrito.'}, status=status.HTTP_200_OK)
-        except CartItem.DoesNotExist:
+        except (CartItem.DoesNotExist, ValueError, TypeError):
             return Response({'error': 'Item no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_item.delete()
+        return Response({'message': 'Item removido del carrito.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def update_item(self, request):
@@ -87,12 +90,13 @@ class CartViewSet(viewsets.ModelViewSet):
 
         try:
             cart_item = CartItem.objects.get(id=item_id, cart=cart)
-            cart_item.quantity = quantity
-            cart_item.save()
-            serializer = CartItemSerializer(cart_item)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except CartItem.DoesNotExist:
+        except (CartItem.DoesNotExist, ValueError, TypeError):
             return Response({'error': 'Item no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_item.quantity = quantity
+        cart_item.save()
+        serializer = CartItemSerializer(cart_item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def clear(self, request):
