@@ -63,7 +63,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NotificationsContainer from './components/NotificationsContainer.vue'
-import api from './api/axios'
+import api, { clearSession } from './api/axios'
 
 const router = useRouter()
 
@@ -92,9 +92,7 @@ async function loadCartCount() {
 }
 
 function logout() {
-  localStorage.removeItem('access')
-  localStorage.removeItem('refresh')
-  localStorage.removeItem('username')
+  clearSession()
   updateAuthFromStorage()
   window.dispatchEvent(new Event('auth-changed'))
   window.dispatchEvent(new Event('cart-changed'))
@@ -111,6 +109,12 @@ onMounted(() => {
     await loadCartCount()
   })
   window.addEventListener('cart-changed', loadCartCount)
+  // Refresh token expired while on a page that requires login
+  window.addEventListener('session-expired', () => {
+    if (router.currentRoute.value.path !== '/login') {
+      router.push('/login')
+    }
+  })
 
   updateAuthFromStorage()
   loadCartCount()
