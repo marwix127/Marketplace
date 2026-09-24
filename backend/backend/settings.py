@@ -79,16 +79,13 @@ CORS_ALLOWED_ORIGINS = env_list('DJANGO_CORS_ALLOWED_ORIGINS', 'http://localhost
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
-    # Use JWT for authentication so Authorization: Bearer <token> works
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # Default permission: keep IsAuthenticated by default but views can
-    # override via get_permissions. This prevents accidental open endpoints.
+    # Private by default: public views opt out in get_permissions
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    # Parsers to accept JSON, form-data and multipart uploads
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',

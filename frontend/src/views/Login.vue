@@ -62,34 +62,21 @@ const { error: showError, success: showSuccess } = useToast();
 
 const email = ref("");
 const password = ref("");
-const error = ref(""); // Added error ref
+const error = ref("");
 
 const login = async () => {
-  error.value = ""; // Clear previous error
+  error.value = "";
   try {
     const response = await api.post("/users/login/", {
       email: email.value,
       password: password.value,
     });
-
-    const access = response.data.access;
-    const refresh = response.data.refresh;
-    const userData = response.data.user; // Obtener usuario directamente
+    const { access, refresh, user } = response.data;
 
     localStorage.setItem("access", access);
     localStorage.setItem("refresh", refresh);
-
-    if (userData) {
-      localStorage.setItem("username", userData.username);
-      localStorage.setItem("email", userData.email);
-    } else {
-      // Fallback solo si por alguna razón no viniera el usuario
-      const userResponse = await api.get("/users/me/", {
-        headers: { Authorization: `Bearer ${access}` },
-      });
-      localStorage.setItem("username", userResponse.data.username);
-      localStorage.setItem("email", userResponse.data.email);
-    }
+    localStorage.setItem("username", user.username);
+    localStorage.setItem("email", user.email);
 
     window.dispatchEvent(new Event("auth-changed"));
 
@@ -97,9 +84,7 @@ const login = async () => {
     setTimeout(() => router.push(redirectTarget()), 500);
   } catch (err) {
     console.error("Error logging in:", err);
-    // Set local error for the alert
     error.value = err.response?.data?.detail || "Error al iniciar sesión";
-    // Also show toast just in case
     showError(error.value);
   }
 };

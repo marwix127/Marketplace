@@ -1,4 +1,4 @@
-# 🛒 Marketplace — Django REST + Vue 3
+# Marketplace (Django REST + Vue 3)
 
 [![CI](https://github.com/marwix127/Marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/marwix127/Marketplace/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
@@ -8,33 +8,29 @@
 
 Marketplace full-stack: API REST con Django REST Framework y autenticación JWT, y una SPA en Vue 3. Los usuarios publican productos con imagen, los añaden al carrito y hacen pedidos.
 
-El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de negocio, los permisos y los casos límite, y **17 tests E2E con Selenium** (patrón Page Object) para los flujos de usuario en el navegador. Todo se ejecuta en cada push con GitHub Actions.
+El proyecto se prueba en dos niveles: 57 tests de API para las reglas de negocio, los permisos y los casos límite, y 17 tests E2E con Selenium (patrón Page Object) para los flujos de usuario en el navegador. Todo se ejecuta en cada push con GitHub Actions.
 
----
+## Funcionalidades
 
-## ✨ Funcionalidades
-
-**👤 Usuarios**
+### Usuarios
 - Registro con validación de contraseña (longitud, contraseñas comunes, solo números…).
 - Login con email. Devuelve un token de acceso y uno de refresco (JWT).
 - Renovación automática del token: si caduca, el frontend lo renueva y repite la petición sin que el usuario lo note. Si la sesión ha expirado del todo, avisa y, en las páginas que requieren sesión, redirige al login.
 - Rutas protegidas: carrito, pedidos y crear o editar productos redirigen al login y, tras iniciar sesión, vuelven a la página pedida. Con la sesión iniciada, login y registro llevan al inicio.
 
-**🛍️ Productos**
+### Productos
 - Listado y ficha de producto públicos.
 - Crear productos con imagen.
 - Solo el propietario puede editarlos o eliminarlos (el backend lo comprueba con un permiso propio). La interfaz permite editar; eliminar solo está disponible en la API.
 - El precio no puede ser negativo.
 
-**🛒 Carrito y pedidos**
+### Carrito y pedidos
 - Añadir productos (si ya está en el carrito, suma la cantidad), cambiar cantidades, quitar y vaciar. Contador en la barra de navegación.
-- **Checkout atómico:** o se crea el pedido completo y se vacía el carrito, o no cambia nada.
+- El checkout es atómico: o se crea el pedido completo y se vacía el carrito, o no cambia nada.
 - Cada pedido guarda el título y el precio del momento de la compra: aunque el vendedor cambie o borre el producto, el pedido no cambia.
 - Historial de pedidos, del más reciente al más antiguo.
 
----
-
-## 🧱 Stack
+## Stack
 
 | Capa | Tecnologías |
 |------|-------------|
@@ -42,7 +38,7 @@ El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de neg
 | Frontend | Vue 3, Vite, Vue Router, Axios |
 | Testing | `APITestCase` de DRF, pytest, Selenium WebDriver, pytest-html |
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ```mermaid
 flowchart LR
@@ -54,11 +50,9 @@ flowchart LR
     T["Tests de API<br/>APITestCase"] -. "cliente de test" .-> API
 ```
 
----
+## Puesta en marcha
 
-## 🚀 Puesta en marcha
-
-Requisitos: **Python 3.12+** (la CI prueba 3.12 y 3.14) y **Node 20.19+ o 22.12+**.
+Requisitos: Python 3.12+ (la CI prueba 3.12 y 3.14) y Node 20.19+ o 22.12+.
 
 ### Backend (http://127.0.0.1:8000/api/)
 
@@ -81,28 +75,26 @@ npm install
 npm run dev
 ```
 
-### ⚙️ Configuración
+### Configuración
 
 Toda la configuración va en variables de entorno. En desarrollo, el backend las lee de `backend/.env` y el frontend de `frontend/.env.local`; hay un `.env.example` en cada carpeta.
 
 | Variable | Parte | Por defecto | Descripción |
 |----------|-------|-------------|-------------|
-| `DJANGO_SECRET_KEY` | Backend | — (obligatoria) | Clave secreta de Django; sin ella el servidor no arranca |
+| `DJANGO_SECRET_KEY` | Backend | (obligatoria) | Clave secreta de Django; sin ella el servidor no arranca |
 | `DJANGO_DEBUG` | Backend | `False` | Modo depuración. Solo `True` en desarrollo |
 | `DJANGO_ALLOWED_HOSTS` | Backend | vacío | Dominios del backend, separados por comas. Obligatoria con `DJANGO_DEBUG=False` |
 | `DJANGO_CORS_ALLOWED_ORIGINS` | Backend | `http://localhost:5173` | Orígenes del frontend que pueden llamar al API |
 | `VITE_API_URL` | Frontend | `http://127.0.0.1:8000/api/` | URL del API. Se fija al hacer el build |
 
----
-
-## 🧪 Testing
+## Testing
 
 | Nivel | Herramientas | Qué cubre |
 |-------|--------------|-----------|
 | API | `APITestCase` de DRF | Reglas de negocio, permisos, validaciones, casos límite |
 | E2E | pytest + Selenium, Page Objects | Flujos completos de usuario en Chrome |
 
-### 🔄 Integración continua
+### Integración continua
 
 Cada push a `main` y cada pull request ejecutan el workflow [CI](.github/workflows/ci.yml) en GitHub Actions:
 
@@ -144,10 +136,10 @@ coverage report
 | `test_products.py` | 2 | Ficha de producto y regresión de "Añadir al carrito" desde la ficha |
 
 Cómo están hechos:
-- **Datos propios en cada test:** cada test crea por API un usuario nuevo y su propio producto (que se borra al terminar), así que no dependen de datos previos ni entre sí.
-- **Login programático:** los tests que no prueban el login guardan los tokens del API en `localStorage` en vez de rellenar el formulario, que ya tiene sus propios tests.
-- **Sin `sleep`:** solo esperas explícitas a estados visibles (un toast, el contador del carrito, la lista cargada).
-- **Si un test falla**, se guarda una captura en `reports/screenshots/` y el informe `reports/report.html` incluye la captura y la consola del navegador.
+- Cada test crea por API un usuario nuevo y su propio producto (que se borra al terminar), así que no dependen de datos previos ni entre sí.
+- Los tests que no prueban el login guardan los tokens del API en `localStorage` en vez de rellenar el formulario, que ya tiene sus propios tests.
+- No hay `sleep`: solo esperas explícitas a estados visibles (un toast, el contador del carrito, la lista cargada).
+- Si un test falla, se guarda una captura en `reports/screenshots/` y el informe `reports/report.html` incluye la captura y la consola del navegador.
 
 Requisitos: Chrome instalado y el backend y el frontend arrancados. El driver de Chrome se descarga automáticamente (Selenium Manager).
 
@@ -163,9 +155,7 @@ La configuración se lee de un archivo `.env` (ver `.env.example`): URLs del fro
 
 > Los usuarios de prueba (`e2e_…@example.com`) se quedan en la base de datos que use el backend; para no mezclarlos con tus datos, arranca el backend con una base de datos aparte.
 
----
-
-## 📚 API
+## API
 
 | Método | Endpoint | Descripción | Acceso |
 |--------|----------|-------------|--------|
@@ -189,9 +179,7 @@ La configuración se lee de un archivo `.env` (ver `.env.example`): URLs del fro
 
 Las rutas autenticadas esperan la cabecera `Authorization: Bearer <access>`.
 
----
-
-## 📁 Estructura
+## Estructura
 
 ```
 Marketplace/
@@ -214,13 +202,10 @@ Marketplace/
     └── tests/
 ```
 
----
-
-
-## 📜 Licencia
+## Licencia
 
 Libre para uso educativo o portfolio.
 
-## 👤 Autor
+## Autor
 
 [@marwix127](https://github.com/marwix127)

@@ -30,7 +30,7 @@ class CustomTokenSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Puedes añadir cualquier dato extra al token si quieres:
+        # Extra claims
         token['username'] = user.username
         token['email'] = user.email
 
@@ -39,7 +39,7 @@ class CustomTokenSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # Lo que Vue necesita:
+        # The frontend stores the user data returned with the tokens
         data["user"] = {
             "id": self.user.id,
             "username": self.user.username,

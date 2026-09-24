@@ -70,7 +70,7 @@ const errorMsg = ref("");
 const register = async () => {
   errorMsg.value = "";
   try {
-    const response = await api.post("/users/register/", {
+    await api.post("/users/register/", {
       email: email.value,
       username: username.value,
       password: password.value,
@@ -80,28 +80,19 @@ const register = async () => {
     email.value = "";
     username.value = "";
     password.value = "";
-    // Opcional: Redirigir al login tras unos segundos
-    // setTimeout(() => router.push('/login'), 2000);
   } catch (err) {
     console.error("Error registering:", err);
+    const data = err.response?.data;
     let msg = "Error al registrar usuario.";
-    
-    if (err.response && err.response.data) {
-        const data = err.response.data;
-        // Si es un error de detalle simple
-        if (data.detail) {
-            msg = data.detail;
-        } 
-        // Si es un error de validación de campos (password, username, email...)
-        else {
-            // Unimos los mensajes de error de los campos
-            const fieldErrors = Object.values(data).flat();
-            if (fieldErrors.length > 0) {
-                msg = fieldErrors.join(" ");
-            }
-        }
+
+    // DRF returns either {"detail": "..."} or a list of messages per field
+    if (data?.detail) {
+      msg = data.detail;
+    } else if (data) {
+      const fieldErrors = Object.values(data).flat();
+      if (fieldErrors.length > 0) msg = fieldErrors.join(" ");
     }
-    
+
     errorMsg.value = msg;
     showError(msg);
   }

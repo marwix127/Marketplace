@@ -13,44 +13,33 @@
       </div>
 
       <div v-else class="products-grid">
-  <div
-    v-for="product in products"
-    :key="product.id"
-    class="product-card"
-  >
-    <div class="product-image">
-      <img :src="imageUrl(product)" :alt="product.title" />
+        <div v-for="product in products" :key="product.id" class="product-card">
+          <div class="product-image">
+            <img :src="imageUrl(product)" :alt="product.title" />
+          </div>
 
-    </div>
+          <div class="product-info">
+            <h3>{{ product.title }}</h3>
+            <p class="product-description">
+              {{ product.description || "Sin descripción" }}
+            </p>
 
-    <div class="product-info">
-      <h3>{{ product.title }}</h3>
-      <p class="product-description">
-        {{ product.description || "Sin descripción" }}
-      </p>
+            <RouterLink :to="`/product/${product.id}`" class="btn-details">
+              Ver detalles
+            </RouterLink>
 
-      <!-- 🔥 NUEVO: botón para ver detalles -->
-      <RouterLink :to="`/product/${product.id}`" class="btn-details">
-        Ver detalles
-      </RouterLink>
-
-      <div class="product-footer">
-        <span class="product-price">{{ product.price }}€</span>
-        <div class="actions">
-          <button class="btn-add-to-cart" @click="addToCart(product)">Añadir al carrito</button>
-          <button
-            v-if="isOwner(product)"
-            class="btn-edit"
-            @click="goToEdit(product.id)"
-          >
-            Editar
-          </button>
+            <div class="product-footer">
+              <span class="product-price">{{ product.price }}€</span>
+              <div class="actions">
+                <button class="btn-add-to-cart" @click="addToCart(product)">Añadir al carrito</button>
+                <button v-if="isOwner(product)" class="btn-edit" @click="goToEdit(product.id)">
+                  Editar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
     </div>
   </div>
 </template>
@@ -74,8 +63,6 @@ async function loadProducts() {
   try {
     const res = await api.get("products/");
     products.value = res.data;
-    // debug: log first product owner
-    // console.log('products loaded', products.value)
   } catch (err) {
     console.error("Error al cargar productos:", err);
   }
@@ -98,18 +85,9 @@ onMounted(() => {
   })
 })
 
+// The API returns the owner's username. Only a UI hint: the backend enforces ownership
 function isOwner(product) {
-  const owner = product?.owner
-  const user = (username.value || "").toString()
-  if (!owner || !user) return false
-
-  // if owner is an object with username
-  if (typeof owner === 'object') {
-    return (owner.username || "").toString().toLowerCase() === user.toLowerCase()
-  }
-
-  // compare strings (case-insensitive, trimmed)
-  return owner.toString().trim().toLowerCase() === user.toLowerCase().trim()
+  return !!username.value && product.owner === username.value
 }
 
 const goToEdit = (productId) => {
@@ -136,7 +114,7 @@ async function addToCart(product) {
     return
   }
 
-    try {
+  try {
     await api.post('cart/add_item/', {
       product_id: product.id,
       quantity: 1

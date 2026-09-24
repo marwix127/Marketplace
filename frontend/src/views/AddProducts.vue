@@ -39,13 +39,11 @@ const createProduct = async () => {
 
     await api.post("products/", formData, {
       headers: {
-        // Let axios set the proper multipart boundary
         "Content-Type": "multipart/form-data",
       },
     });
 
     showSuccess("Producto creado correctamente.");
-    // small delay then redirect
     setTimeout(() => router.push("/"), 800);
   } catch (err) {
     showError(err.response?.data?.detail || "Error al crear producto");

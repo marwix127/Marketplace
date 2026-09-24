@@ -34,8 +34,6 @@ function toggleOrder(orderId) {
   } else {
     expandedOrders.value.add(orderId)
   }
-  // Force reactivity
-  expandedOrders.value = new Set(expandedOrders.value)
 }
 
 function isExpanded(orderId) {

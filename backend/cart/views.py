@@ -116,16 +116,11 @@ class CartViewSet(viewsets.GenericViewSet):
             if not cart_items:
                 return Response({'error': 'El carrito está vacío.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Calculate total price
             total_price = sum(item.get_subtotal() for item in cart_items)
-
-            # Create the order
             order = Order.objects.create(
                 user=request.user,
                 total_price=total_price
             )
-
-            # Create order items
             OrderItem.objects.bulk_create([
                 OrderItem(
                     order=order,
