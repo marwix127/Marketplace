@@ -1,6 +1,7 @@
 from factories import user_data
 from pages.home_page import HomePage
 from pages.login_page import LoginPage
+from pages.orders_page import OrdersPage
 from pages.register_page import RegisterPage
 
 
@@ -52,3 +53,25 @@ def test_logout(driver, base_url, logged_in):
 
     assert home.is_logged_out()
     assert driver.execute_script("return localStorage.getItem('access')") is None
+
+
+def test_private_page_redirects_to_login_and_back(driver, base_url, user):
+    driver.get(f"{base_url}/orders")
+
+    # The guard sends anonymous users to the login form
+    login_page = LoginPage(driver, base_url)
+    login_page.find(LoginPage.EMAIL_INPUT)
+    assert "/login?redirect=" in driver.current_url
+
+    # After logging in, the user lands on the page they asked for
+    login_page.login(user["email"], user["password"])
+    orders = OrdersPage(driver, base_url)
+    orders.wait_for_path("/orders")
+    orders.wait_loaded()
+    assert orders.is_empty()
+
+
+def test_logged_in_user_cannot_open_login_page(driver, base_url, logged_in):
+    LoginPage(driver, base_url).open()
+
+    HomePage(driver, base_url).wait_for_path("/")

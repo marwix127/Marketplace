@@ -46,11 +46,18 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../api/axios";
 import { useToast } from "../composables/useToast";
 
+const route = useRoute();
 const router = useRouter();
+
+// Page to return to after logging in. Only in-app paths are accepted, never external URLs ("//evil.com")
+function redirectTarget() {
+  const target = route.query.redirect;
+  return typeof target === "string" && target.startsWith("/") && !target.startsWith("//") ? target : "/";
+}
 const { error: showError, success: showSuccess } = useToast();
 
 const email = ref("");
@@ -87,7 +94,7 @@ const login = async () => {
     window.dispatchEvent(new Event("auth-changed"));
 
     showSuccess("¡Sesión iniciada correctamente!");
-    setTimeout(() => router.push("/"), 500);
+    setTimeout(() => router.push(redirectTarget()), 500);
   } catch (err) {
     console.error("Error logging in:", err);
     // Set local error for the alert

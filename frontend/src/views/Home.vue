@@ -59,6 +59,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from 'vue-router'
 import api from "../api/axios";
+import { BACKEND_URL } from "../config";
 import { useToast } from "../composables/useToast"
 
 const router = useRouter()
@@ -67,8 +68,6 @@ const { success, error } = useToast()
 const products = ref([]);
 
 const username = ref(localStorage.getItem("username") || "");
-// Backend base URL (ajusta si usas otra dirección/puerto)
-const backendURL = 'http://127.0.0.1:8000'
 const placeholderURL = (title = 'Producto') => `https://via.placeholder.com/400x300?text=${encodeURIComponent(title)}`
 
 async function loadProducts() {
@@ -124,7 +123,7 @@ function imageUrl(product) {
     return img
   }
   const path = img.startsWith('/') ? img : `/${img}`
-  return backendURL + path
+  return BACKEND_URL + path
 }
 
 async function addToCart(product) {

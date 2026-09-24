@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/axios'
+import { BACKEND_URL } from '../config'
 import { useToast } from '../composables/useToast'
 
 const router = useRouter()
@@ -10,8 +11,6 @@ const { success, error } = useToast()
 const cart = ref(null)
 const loading = ref(true)
 const checkingOut = ref(false)
-
-const backendURL = 'http://127.0.0.1:8000'
 
 async function loadCart() {
   loading.value = true
@@ -37,7 +36,7 @@ function imageUrl(product) {
     return img
   }
   const path = img.startsWith('/') ? img : `/${img}`
-  return backendURL + path
+  return BACKEND_URL + path
 }
 
 async function updateQuantity(itemId, newQuantity) {

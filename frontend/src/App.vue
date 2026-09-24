@@ -111,8 +111,9 @@ onMounted(() => {
   window.addEventListener('cart-changed', loadCartCount)
   // Refresh token expired while on a page that requires login
   window.addEventListener('session-expired', () => {
-    if (router.currentRoute.value.path !== '/login') {
-      router.push('/login')
+    const current = router.currentRoute.value
+    if (current.path !== '/login') {
+      router.push({ path: '/login', query: { redirect: current.fullPath } })
     }
   })
 

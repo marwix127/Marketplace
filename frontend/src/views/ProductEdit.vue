@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import api from "../api/axios";
+import { BACKEND_URL } from "../config";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../composables/useToast";
 
@@ -100,7 +101,7 @@ const updateProduct = async () => {
               </div>
               <div v-else-if="currentImage">
                 <p class="mb-1">Imagen actual:</p>
-                <img :src="(currentImage && (currentImage.startsWith('http') ? currentImage : 'http://127.0.0.1:8000' + currentImage))" alt="current" />
+                <img :src="(currentImage && (currentImage.startsWith('http') ? currentImage : BACKEND_URL + currentImage))" alt="current" />
               </div>
             </div>
           </div>

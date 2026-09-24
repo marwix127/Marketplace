@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # Throwaway key: CI only runs tests, nothing is deployed
+  DJANGO_SECRET_KEY: ci-only-insecure-key
+
 jobs:
   backend:
     name: API tests (Python ${{ matrix.python-version }})
@@ -77,6 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HEADLESS: "true"
+      DJANGO_DEBUG: "True"
     steps:
       - uses: actions/checkout@v7
 
