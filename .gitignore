@@ -15,6 +15,9 @@ env/
 backend/db.sqlite3
 backend/media/
 
+# E2E test reports and failure screenshots
+selenium-django-vue-tests/reports/
+
 # Editors / OS
 .idea/
 .DS_Store

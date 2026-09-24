@@ -1,68 +1,54 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 
 class BasePage:
-    def __init__(self, driver):
+    """Common helpers. Every lookup waits explicitly and fails with a clear message instead of returning None."""
+
+    PATH = "/"
+    TIMEOUT = 10
+
+    def __init__(self, driver, base_url):
         self.driver = driver
-        self.timeout = 10
+        self.base_url = base_url
+        self.wait = WebDriverWait(driver, self.TIMEOUT)
 
-    def open_url(self, url):
-        self.driver.get(url)
+    def open(self):
+        self.driver.get(f"{self.base_url}{self.PATH}")
+        return self
 
-    def find_element(self, locator, timeout=None):
-        timeout = timeout if timeout else self.timeout
-        try:
-            return WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(locator)
-            )
-        except TimeoutException:
-            print(f"Element not found: {locator}")
-            return None
+    def find(self, locator):
+        return self.wait.until(EC.visibility_of_element_located(locator), f"Element not visible: {locator}")
 
-    def find_elements(self, locator, timeout=None):
-        timeout = timeout if timeout else self.timeout
-        try:
-            return WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_all_elements_located(locator)
-            )
-        except TimeoutException:
-            return []
+    def find_all(self, locator):
+        # No waiting here: call it once the page has reached the expected state
+        return self.driver.find_elements(*locator)
 
     def click(self, locator):
-        element = self.find_element(locator)
-        if element:
-            element.click()
-        else:
-            raise Exception(f"Cannot click element: {locator}")
+        element = self.wait.until(EC.presence_of_element_located(locator), f"Element not found: {locator}")
+        # Centre it so fixed elements (toasts, Vue DevTools button) don't cover it
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        self.wait.until(EC.element_to_be_clickable(locator), f"Element not clickable: {locator}").click()
 
-    def type_text(self, locator, text):
-        element = self.find_element(locator)
-        if element:
-            element.clear()
-            element.send_keys(text)
-        else:
-             raise Exception(f"Cannot type in element: {locator}")
+    def type(self, locator, text):
+        field = self.find(locator)
+        field.clear()
+        field.send_keys(text)
 
-    def get_text(self, locator):
-        element = self.find_element(locator)
-        return element.text if element else ""
+    def text_of(self, locator):
+        return self.find(locator).text
 
-    def is_visible(self, locator):
-        try:
-            element = self.find_element(locator)
-            return element.is_displayed() if element else False
-        except:
-            return False
+    def wait_for_text(self, locator, text):
+        self.wait.until(EC.text_to_be_present_in_element(locator, text), f"Text {text!r} not found in {locator}")
 
-    def wait_for_invisibility(self, locator, timeout=None):
-        timeout = timeout if timeout else self.timeout
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.invisibility_of_element_located(locator)
-            )
-            return True
-        except TimeoutException:
-            return False
+    def wait_until_gone(self, locator):
+        self.wait.until(EC.invisibility_of_element_located(locator), f"Element still visible: {locator}")
 
+    def wait_for_path(self, path):
+        url = f"{self.base_url}{path}"
+        self.wait.until(EC.url_to_be(url), f"Expected URL {url}, got {self.driver.current_url}")
+
+    def wait_for_toast(self, text):
+        """Wait for a toast notification containing `text` and return its full message."""
+        return self.text_of((By.XPATH, f"//p[contains(@class, 'toast-message')][contains(., '{text}')]"))

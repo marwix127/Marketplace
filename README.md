@@ -7,7 +7,7 @@
 
 Marketplace full-stack: API REST con Django REST Framework y autenticación JWT, y una SPA en Vue 3. Los usuarios publican productos con imagen, los añaden al carrito y hacen pedidos.
 
-El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de negocio, los permisos y los casos límite, y **tests E2E con Selenium** (patrón Page Object) para los flujos de usuario en el navegador.
+El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de negocio, los permisos y los casos límite, y **15 tests E2E con Selenium** (patrón Page Object) para los flujos de usuario en el navegador.
 
 ---
 
@@ -38,7 +38,7 @@ El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de neg
 |------|-------------|
 | Backend | Python, Django 5.2, Django REST Framework, SimpleJWT, django-cors-headers, Pillow, SQLite |
 | Frontend | Vue 3, Vite, Vue Router, Axios |
-| Testing | `APITestCase` de DRF, pytest, Selenium WebDriver, webdriver-manager |
+| Testing | `APITestCase` de DRF, pytest, Selenium WebDriver, pytest-html |
 
 ## 🏗️ Arquitectura
 
@@ -107,17 +107,33 @@ python manage.py test
 
 ### Tests E2E
 
-Cubren registro, login correcto e incorrecto, añadir y quitar productos del carrito, el cálculo del total, el checkout completo, el historial de pedidos y la ficha de producto.
+| Archivo | Tests | Qué se comprueba |
+|---------|:-----:|------------------|
+| `test_auth.py` | 5 | Registro, contraseña débil, login correcto e incorrecto (sin guardar token), logout |
+| `test_cart.py` | 5 | Añadir desde el listado, sumar cantidades, botón +, quitar y vaciar (con confirmación) |
+| `test_checkout.py` | 1 | El pedido se crea con el total del carrito y el carrito queda vacío |
+| `test_orders.py` | 2 | Estado vacío y detalle de las líneas de un pedido |
+| `test_products.py` | 2 | Ficha de producto y regresión de "Añadir al carrito" desde la ficha |
 
-Requisitos: Chrome instalado, el backend y el frontend arrancados, y **al menos un producto creado** en la aplicación.
+Cómo están hechos:
+- **Datos propios en cada test:** cada test crea por API un usuario nuevo y su propio producto (que se borra al terminar), así que no dependen de datos previos ni entre sí.
+- **Login programático:** los tests que no prueban el login guardan los tokens del API en `localStorage` en vez de rellenar el formulario, que ya tiene sus propios tests.
+- **Sin `sleep`:** solo esperas explícitas a estados visibles (un toast, el contador del carrito, la lista cargada).
+- **Si un test falla**, se guarda una captura en `reports/screenshots/` y el informe `reports/report.html` incluye la captura y la consola del navegador.
+
+Requisitos: Chrome instalado y el backend y el frontend arrancados. El driver de Chrome se descarga automáticamente (Selenium Manager).
 
 ```bash
 cd selenium-django-vue-tests
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-pytest -v
+pytest
 ```
+
+La configuración se lee de un archivo `.env` (ver `.env.example`): URLs del frontend y del API, y `HEADLESS=true` para ejecutar Chrome sin ventana.
+
+> Los usuarios de prueba (`e2e_…@example.com`) se quedan en la base de datos que use el backend; para no mezclarlos con tus datos, arranca el backend con una base de datos aparte.
 
 ### 🐞 Bugs encontrados y corregidos
 
@@ -127,7 +143,7 @@ pytest -v
 | Un id no numérico (`"abc"`) al añadir, actualizar o quitar del carrito devolvía 500 | Test de API | Responde 404 |
 | `quantity: null` al añadir al carrito devolvía 500 | Test de API | Responde 400 |
 | Se podían crear productos con precio negativo | Test de API | Validación en el modelo (400) |
-| "Añadir al carrito" desde la ficha de producto no funcionaba y aun así mostraba un mensaje de éxito | Revisión de código | Usa el endpoint correcto y muestra los errores reales |
+| "Añadir al carrito" desde la ficha de producto no funcionaba y aun así mostraba un mensaje de éxito | Revisión de código | Usa el endpoint correcto y muestra los errores reales; lo cubre un test E2E de regresión |
 | El checkout no era atómico: un fallo a mitad dejaba pedidos incompletos | Revisión de código | Transacción atómica con bloqueo del carrito; lo cubre un test de *rollback* |
 | La sesión dejaba de funcionar a los 5 minutos porque el token no se renovaba | Revisión de código | Interceptor de Axios que renueva el token con una única petición compartida |
 | No se podía guardar un producto con céntimos desde el formulario de edición | Revisión de código | `step="0.01"` en el campo de precio |
@@ -176,6 +192,8 @@ Marketplace/
 │       ├── router/
 │       └── views/
 └── selenium-django-vue-tests/   # tests E2E (pytest + Selenium)
+    ├── api_client.py            # prepara datos de prueba por API
+    ├── conftest.py              # fixtures, driver y capturas en fallos
     ├── pages/                   # Page Objects
     └── tests/
 ```

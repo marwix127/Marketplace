@@ -1,42 +1,59 @@
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+
 from .base_page import BasePage
 
+
 class CartPage(BasePage):
-    # Locators
-    CART_ITEMS = (By.CLASS_NAME, "cart-item")
-    EMPTY_CART_MSG = (By.CLASS_NAME, "empty-cart")
-    TOTAL_PRICE = (By.CSS_SELECTOR, ".summary-row.total strong")
-    REMOVE_BTN = (By.CLASS_NAME, "btn-remove")
-    QUANTITY_INPUT = (By.CSS_SELECTOR, ".quantity-controls input")
-    CLEAR_CART_BTN = (By.XPATH, "//button[contains(text(), 'Vaciar carrito')]")
+    PATH = "/cart"
+
+    ITEM = (By.CLASS_NAME, "cart-item")
+    ITEM_TITLE = (By.CSS_SELECTOR, ".cart-item h3")
+    EMPTY_MSG = (By.CLASS_NAME, "empty-cart")
+    TOTAL = (By.CSS_SELECTOR, ".summary-row.total strong")
     CHECKOUT_BTN = (By.CLASS_NAME, "btn-checkout")
+    CLEAR_BTN = (By.XPATH, "//button[normalize-space()='Vaciar carrito']")
 
-    def get_cart_items(self):
-        return self.find_elements(self.CART_ITEMS)
+    @staticmethod
+    def _item(title):
+        return f"//div[contains(@class, 'cart-item')][.//h3[normalize-space()='{title}']]"
 
-    def is_cart_empty(self):
-        return self.is_visible(self.EMPTY_CART_MSG)
+    def open(self):
+        super().open()
+        self.wait_loaded()
+        return self
 
-    def get_total_price(self):
-        text = self.get_text(self.TOTAL_PRICE)
-        # text format: "100.00€" -> remove currency and parse
-        return float(text.replace('€', '').strip())
+    def wait_loaded(self):
+        self.wait.until(
+            EC.any_of(EC.visibility_of_element_located(self.ITEM), EC.visibility_of_element_located(self.EMPTY_MSG)),
+            "Cart did not finish loading",
+        )
 
-    def remove_first_item(self):
-        items = self.get_cart_items()
-        if items:
-            btn = items[0].find_element(*self.REMOVE_BTN)
-            btn.click()
+    def item_titles(self):
+        return [element.text for element in self.find_all(self.ITEM_TITLE)]
 
-    def clear_cart(self):
-        self.click(self.CLEAR_CART_BTN)
-        # Confirm alert if present
-        try:
-            alert = self.driver.switch_to.alert
-            alert.accept()
-        except:
-            pass
-            
+    def quantity(self, title):
+        return self.find((By.XPATH, f"{self._item(title)}//input")).get_attribute("value")
+
+    def increase_quantity(self, title):
+        self.click((By.XPATH, f"{self._item(title)}//button[normalize-space()='+']"))
+
+    def remove(self, title):
+        self.click((By.XPATH, f"{self._item(title)}//button[contains(@class, 'btn-remove')]"))
+        self.wait_until_gone((By.XPATH, self._item(title)))
+
+    def clear(self):
+        self.click(self.CLEAR_BTN)
+        self.wait.until(EC.alert_is_present(), "Confirmation dialog did not appear").accept()
+
+    def total(self):
+        return self.text_of(self.TOTAL)
+
+    def wait_for_total(self, total):
+        self.wait_for_text(self.TOTAL, total)
+
+    def is_empty(self):
+        return self.find(self.EMPTY_MSG).is_displayed()
+
     def checkout(self):
         self.click(self.CHECKOUT_BTN)
-

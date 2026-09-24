@@ -1,38 +1,34 @@
 from selenium.webdriver.common.by import By
+
 from .base_page import BasePage
 
+
 class HomePage(BasePage):
-    # Locators
-    PRODUCTS_GRID = (By.CLASS_NAME, "products-grid")
-    PRODUCT_CARD = (By.CLASS_NAME, "product-card")
-    PRODUCT_TITLE = (By.TAG_NAME, "h3")
-    ADD_TO_CART_BTN = (By.CLASS_NAME, "btn-add-to-cart")
-    HERO_SECTION = (By.CLASS_NAME, "hero-section")
-    LOGIN_LINK = (By.CSS_SELECTOR, "a[href='/login']")
-    CART_LINK = (By.CSS_SELECTOR, "a[href='/cart']")
-    
-    def get_products(self):
-        # Wait until at least one product card is present
-        self.find_element(self.PRODUCT_CARD) 
-        return self.find_elements(self.PRODUCT_CARD)
+    PATH = "/"
 
-    def get_product_titles(self):
-        products = self.get_products()
-        return [p.find_element(*self.PRODUCT_TITLE).text for p in products]
+    GREETING = (By.CSS_SELECTOR, ".nav-user .nav-link")
+    LOGOUT_BTN = (By.CSS_SELECTOR, "button.logout")
+    LOGIN_LINK = (By.CSS_SELECTOR, ".nav-menu a[href='/login']")
+    CART_BADGE = (By.CLASS_NAME, "cart-badge")
 
-    def add_first_product_to_cart(self):
-        products = self.get_products()
-        if products:
-            # Encuentra el botón dentro de la primera tarjeta
-            btn = products[0].find_element(*self.ADD_TO_CART_BTN)
-            btn.click()
-            return True
-        return False
+    @staticmethod
+    def _card(title):
+        return f"//div[contains(@class, 'product-card')][.//h3[normalize-space()='{title}']]"
 
-    def go_to_login(self):
-        # Asumiendo que hay un link en el navbar
-        # Si no hay navbar definido en App.vue, podríamos navegar directamente
-        self.driver.get(f"{self.driver.current_url.rstrip('/')}/login")
+    def add_to_cart(self, title):
+        self.click((By.XPATH, f"{self._card(title)}//button[contains(@class, 'btn-add-to-cart')]"))
 
-    def go_to_cart(self):
-        self.driver.get(f"{self.driver.current_url.rstrip('/')}/cart")
+    def open_details(self, title):
+        self.click((By.XPATH, f"{self._card(title)}//a[contains(@class, 'btn-details')]"))
+
+    def greeting(self):
+        return self.text_of(self.GREETING)
+
+    def logout(self):
+        self.click(self.LOGOUT_BTN)
+
+    def is_logged_out(self):
+        return self.find(self.LOGIN_LINK).is_displayed()
+
+    def wait_for_cart_count(self, count):
+        self.wait_for_text(self.CART_BADGE, f"({count})")
