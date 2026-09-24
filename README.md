@@ -1,13 +1,14 @@
 # 🛒 Marketplace — Django REST + Vue 3
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+[![CI](https://github.com/marwix127/Marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/marwix127/Marketplace/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)
 ![Vue](https://img.shields.io/badge/Vue-3-4FC08D?logo=vuedotjs&logoColor=white)
 ![Selenium](https://img.shields.io/badge/Selenium-E2E-43B02A?logo=selenium&logoColor=white)
 
 Marketplace full-stack: API REST con Django REST Framework y autenticación JWT, y una SPA en Vue 3. Los usuarios publican productos con imagen, los añaden al carrito y hacen pedidos.
 
-El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de negocio, los permisos y los casos límite, y **15 tests E2E con Selenium** (patrón Page Object) para los flujos de usuario en el navegador.
+El proyecto se prueba en dos niveles: **57 tests de API** para las reglas de negocio, los permisos y los casos límite, y **15 tests E2E con Selenium** (patrón Page Object) para los flujos de usuario en el navegador. Todo se ejecuta en cada push con GitHub Actions.
 
 ---
 
@@ -56,7 +57,7 @@ flowchart LR
 
 ## 🚀 Puesta en marcha
 
-Requisitos: **Python 3.10+** y **Node 20.19+ o 22.12+**.
+Requisitos: **Python 3.12+** (la CI prueba 3.12 y 3.14) y **Node 20.19+ o 22.12+**.
 
 ### Backend (http://127.0.0.1:8000/api/)
 
@@ -89,6 +90,16 @@ npm run dev
 | API | `APITestCase` de DRF | Reglas de negocio, permisos, validaciones, casos límite |
 | E2E | pytest + Selenium, Page Objects | Flujos completos de usuario en Chrome |
 
+### 🔄 Integración continua
+
+Cada push a `main` y cada pull request ejecutan el workflow [CI](.github/workflows/ci.yml) en GitHub Actions:
+
+| Job | Qué hace |
+|-----|----------|
+| API tests | Con Python 3.12 y 3.14: `manage.py check`, comprueba que no falten migraciones y ejecuta los tests de API midiendo la cobertura (actualmente 97 %; el informe aparece en el resumen de cada ejecución) |
+| Frontend build | `npm ci` y build de producción |
+| E2E tests | Solo si los dos anteriores pasan. Levanta el backend con una base de datos nueva, sirve el build de producción del frontend y ejecuta Selenium en modo headless. Sube como artefacto el informe HTML (con capturas de los fallos) y los logs de los servidores |
+
 ### Tests de API
 
 Tardan unos 4 segundos. Usan una base de datos en memoria y una carpeta temporal para las imágenes, así que no tocan los datos de desarrollo.
@@ -96,6 +107,11 @@ Tardan unos 4 segundos. Usan una base de datos en memoria y una carpeta temporal
 ```bash
 cd backend
 python manage.py test
+
+# Con informe de cobertura
+pip install coverage
+coverage run manage.py test
+coverage report
 ```
 
 | App | Tests | Qué se comprueba |
@@ -180,6 +196,7 @@ Las rutas autenticadas esperan la cabecera `Authorization: Bearer <access>`.
 
 ```
 Marketplace/
+├── .github/workflows/ci.yml     # integración continua (GitHub Actions)
 ├── backend/                     # API Django REST
 │   ├── users/                   # registro, login JWT, /me
 │   ├── products/                # productos con imagen y permisos de propietario
