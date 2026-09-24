@@ -163,19 +163,6 @@ La configuración se lee de un archivo `.env` (ver `.env.example`): URLs del fro
 
 > Los usuarios de prueba (`e2e_…@example.com`) se quedan en la base de datos que use el backend; para no mezclarlos con tus datos, arranca el backend con una base de datos aparte.
 
-### 🐞 Bugs encontrados y corregidos
-
-| Bug | Detectado con | Corrección |
-|-----|---------------|------------|
-| `POST /api/cart/` devolvía 500: el carrito exponía rutas genéricas que no debían existir | Test de API | Solo quedan las acciones propias del carrito |
-| Un id no numérico (`"abc"`) al añadir, actualizar o quitar del carrito devolvía 500 | Test de API | Responde 404 |
-| `quantity: null` al añadir al carrito devolvía 500 | Test de API | Responde 400 |
-| Se podían crear productos con precio negativo | Test de API | Validación en el modelo (400) |
-| "Añadir al carrito" desde la ficha de producto no funcionaba y aun así mostraba un mensaje de éxito | Revisión de código | Usa el endpoint correcto y muestra los errores reales; lo cubre un test E2E de regresión |
-| El checkout no era atómico: un fallo a mitad dejaba pedidos incompletos | Revisión de código | Transacción atómica con bloqueo del carrito; lo cubre un test de *rollback* |
-| La sesión dejaba de funcionar a los 5 minutos porque el token no se renovaba | Revisión de código | Interceptor de Axios que renueva el token con una única petición compartida |
-| No se podía guardar un producto con céntimos desde el formulario de edición | Revisión de código | `step="0.01"` en el campo de precio |
-
 ---
 
 ## 📚 API
